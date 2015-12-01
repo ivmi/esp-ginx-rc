@@ -24,6 +24,8 @@
 #include "driver/relay.h"
 #include "mem.h"
 
+#include "pwm.h"
+
 #include "dns.h"
 #include "serial_number.h"
 
@@ -42,8 +44,6 @@ static void heapTimerCb(void *arg){
 }
 
 #endif
-
-
 
 
 static void config_wifi(){
@@ -72,6 +72,23 @@ static void config_wifi(){
     
 }
 
+#define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_MTMS_U
+#define PWM_0_OUT_IO_NUM 14
+#define PWM_0_OUT_IO_FUNC  FUNC_GPIO14
+#define PWM_DEPTH 1023
+#define PWM_FREQ_MAX 1000
+#define PWM_1S 1000000
+void user_init_pwm(void)
+{
+    uint32 io_info[][3] = {{PWM_0_OUT_IO_MUX,PWM_0_OUT_IO_FUNC,PWM_0_OUT_IO_NUM},}; 
+    uint32 pwm_duty_init[PWM_CHANNEL] = {0};
+    
+    pwm_init(1000, pwm_duty_init, 1, io_info); 
+    pwm_start();
+}
+
+
+
 /******************************************************************************
  * FunctionName : user_init
  * Description  : entry of user application, init user function here
@@ -79,10 +96,11 @@ static void config_wifi(){
  * Returns      : none
 *******************************************************************************/
 void user_init(void)
-{   
-    
+{ 
     system_update_cpu_freq(160); //overclock :)
 
+    //user_init_pwm();
+    
     uart_init(BIT_RATE_115200,BIT_RATE_115200);
 
     NODE_DBG("User Init");
@@ -102,7 +120,10 @@ void user_init(void)
 
     //uncomment if you have sensors intalled
     //sensors_init();
-
+    
+    rc_control_init();
+   
+   
     #ifdef DEVELOP_VERSION
 
     //arm timer

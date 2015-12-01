@@ -50,7 +50,10 @@ static void http_ws_handle_message(http_connection *c,ws_frame *msg){
 		c->cgi.argument=(void *)msg;
 		//call cgi
 		int r = c->cgi.function(c);
-		int sent = http_transmit(c);
+        
+        int sent = 0;
+        if (c->output.bufferPos - c->output.buffer > 0)
+            sent = http_transmit(c);
 
 		if(r==HTTP_WS_CGI_DONE){
 			//we should close the socket

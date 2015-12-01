@@ -177,6 +177,14 @@ else
 	$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(FIRMWAREDIR)0x00000.bin 0x10000 $(FIRMWAREDIR)0x10000.bin
 endif
 
+flash2: 
+ifndef PDIR
+	$(MAKE) -C ./app flash2
+else
+	$(ESPTOOL) --port $(ESPPORT) write_flash 0x10000 $(FIRMWAREDIR)0x10000.bin
+endif
+
+
 html:
 	$(MKFSTOOL) -s app/http/html/ -d app/http/rofs_data.c
 

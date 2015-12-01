@@ -24,13 +24,15 @@
 #include "websocket.h"
 #include "http_websocket_server.h"
 
-#define HTTP_PORT 8088
+#include "ws_gamepad_app.h"
 
-#define WS_APP_STREAM_START "stream start"
-#define WS_APP_STREAM_STOP "stream stop"
-/*
-struct old_ws_app_context {
+#define HTTP_PORT 80
 
+#define WS_APP_GAMEPAD_DATA "G:"
+
+Gamepad gamepad;
+
+struct ws_app_context {
 	uint8_t stream_data;
 	int packet_requested_size;
 	http_connection *conn;
@@ -40,43 +42,17 @@ struct old_ws_app_context {
 };
 
 
-static void ICACHE_FLASH_ATTR old_ws_app_send_packet(struct ws_app_context *context){
+static void ICACHE_FLASH_ATTR ws_app_send_packet(struct ws_app_context *context){
 
-	NODE_DBG("Webscoket app send packet size %d, requested: %d",context->packet_size,context->packet_requested_size);
-
-	if( (!context->waiting_sent) && context->stream_data==1){
-		//send packet
-
-		if(context->packet_requested_size != context->packet_size ){
-			NODE_DBG("Webscoket app changing packet size %p",context);
-
-			if(context->packet!=NULL)
-				os_free(context->packet); //free previous packet
-
-			context->packet=NULL;
-			context->packet_size=0;
-		}	
-
-		if(context->packet==NULL)
-		{
-			NODE_DBG("Webscoket allocating packet %p",context);
-			context->packet = (char *)os_zalloc(context->packet_requested_size);
-			context->packet_size=context->packet_requested_size;
-			//fill with trash data
-			int i;
-			for(i=0; i < context->packet_size;i++)
-				context->packet[i]=i%0xFF;
-		} 
-		
-		http_ws_push_bin(context->conn,context->packet,context->packet_size);
-		context->waiting_sent=1;
-	}
+	//NODE_DBG("Webscoket app send packet size %d, requested: %d",context->packet_size,context->packet_requested_size);
+	
+    //http_ws_push_bin(context->conn,context->packet,context->packet_size);
+	context->waiting_sent=1;
 
 }
 
 
-static int  ICACHE_FLASH_ATTR old_ws_app_msg_sent(http_connection *c){
-
+static int  ICACHE_FLASH_ATTR ws_app_msg_sent(http_connection *c){
 	NODE_DBG("Webscoket app msg sent %p",c);
 
 	struct ws_app_context *context = (struct ws_app_context*)c->reverse;
@@ -87,16 +63,16 @@ static int  ICACHE_FLASH_ATTR old_ws_app_msg_sent(http_connection *c){
 
 		context->waiting_sent=0;
 
-		if(context->stream_data==1){
-			//no requet to stop made, send next packet
-			ws_app_send_packet(context);
-		}
+//		if(context->stream_data==1){
+//			//no requet to stop made, send next packet
+//			ws_app_send_packet(context);
+//		}
 
 	}
 
 }
 
-static int  ICACHE_FLASH_ATTR old_ws_app_client_disconnected(http_connection *c){
+static int  ICACHE_FLASH_ATTR ws_app_client_disconnected(http_connection *c){
 
 	NODE_DBG("Webscoket app client disconnected %p",c);
 
@@ -113,7 +89,7 @@ static int  ICACHE_FLASH_ATTR old_ws_app_client_disconnected(http_connection *c)
 
 }
 
-static int  ICACHE_FLASH_ATTR old_ws_app_client_connected(http_connection *c){
+static int  ICACHE_FLASH_ATTR ws_app_client_connected(http_connection *c){
 
 	NODE_DBG("Webscoket app client connected %p",c);
 		
@@ -126,7 +102,7 @@ static int  ICACHE_FLASH_ATTR old_ws_app_client_connected(http_connection *c){
 }
 
 
-static int  ICACHE_FLASH_ATTR old_ws_app_msg_received(http_connection *c){
+static int  ICACHE_FLASH_ATTR ws_app_msg_received(http_connection *c){
 
 	NODE_DBG("Webscoket app msg received %p",c);
 
@@ -147,39 +123,38 @@ static int  ICACHE_FLASH_ATTR old_ws_app_msg_received(http_connection *c){
 	os_memcpy(str,s,msg->SIZE);
 	str[msg->SIZE]=0;
 
-	NODE_DBG("\tmsg: %s",str);
+	//NODE_DBG("\tmsg: %s",str);
 	
-	if(strstr(str,WS_APP_STREAM_START)==str){
-		//request to start stream
-		NODE_DBG("\trequest stream start");
+	if(strstr(str, WS_APP_GAMEPAD_DATA)==str){
+		//gamepad data
+		//NODE_DBG("\tGamepad data");
 
-		char * s= str + strlen(WS_APP_STREAM_START);		
+		char * s= str + strlen(WS_APP_GAMEPAD_DATA);		
 
-		int pSize = atoi(s);
-
-		NODE_DBG("\trequest stream packet size %d",pSize);
-
-		if(pSize>0 && pSize <= 1024)
-		{					
-			context->packet_requested_size=pSize;
-			context->stream_data =1;
-			if(!context->waiting_sent)
-				ws_app_send_packet(context); //send fisrt pkt
-		}
-
-	}
-	else if(strstr(str,WS_APP_STREAM_STOP)==str){
-		NODE_DBG("\trequest stream stop");
-		context->stream_data=0;
-	}
-
+        gamepad.x = atoi(s);
+        if (gamepad.x < -100)
+            gamepad.x = -100;
+        if (gamepad.x > 100)
+            gamepad.x = 100;
+        
+        s = strstr(s, ",");
+        
+        gamepad.y = atoi(s);
+        if (gamepad.y < -100)
+            gamepad.y = -100;
+        if (gamepad.y > 100)
+            gamepad.y = 100;
+        
+		NODE_DBG("Gamepad: %d, %d", gamepad.x, gamepad.y);
+    }
+        
 	os_free(str);
 
 	return HTTP_WS_CGI_MORE;
 
 }
 
-void ICACHE_FLASH_ATTR old_init_ws_server(){
+void ICACHE_FLASH_ATTR init_ws_server(){
 
 	NODE_DBG("Webscoket app init");
 
@@ -187,4 +162,4 @@ void ICACHE_FLASH_ATTR old_init_ws_server(){
 	http_ws_server_init(ws_app_client_connected,ws_app_client_disconnected,ws_app_msg_received,ws_app_msg_sent);
 	http_ws_server_start();
 
-}*/
+}

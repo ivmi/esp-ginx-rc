@@ -40,11 +40,14 @@ class ESPROM:
     ESP_READ_REG    = 0x0a
 
     # Maximum block sized for RAM and Flash writes, respectively.
+    #ESP_RAM_BLOCK   = 0x180
     ESP_RAM_BLOCK   = 0x1800
+    #ESP_FLASH_BLOCK = 0x40
     ESP_FLASH_BLOCK = 0x100
 
     # Default baudrate. The ROM auto-bauds, so we can use more or less whatever we want.
     ESP_ROM_BAUD    = 230400
+    #ESP_ROM_BAUD = 74440 
     #ESP_ROM_BAUD     = 921600
     #ESP_ROM_BAUD = 460800
 
@@ -59,7 +62,7 @@ class ESPROM:
     ESP_OTP_MAC1    = 0x3ff00054
 
     def __init__(self, port = 0, baud = ESP_ROM_BAUD):
-        self._port = serial.Serial(port, 9600)
+        #self._port = serial.Serial(port, 9600)
         self._port = serial.Serial(port, baud)
 
     """ Read bytes from the serial port while performing SLIP unescaping """

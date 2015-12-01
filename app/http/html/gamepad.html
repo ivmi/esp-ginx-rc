@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="mobile-web-app-capable" content="yes">        
+    </head>
+<body>
+	<style>
+        .rot_cont {
+            -webkit-transform: rotate(90deg);
+            -moz-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+            -ms-transform: rotate(90deg);
+            transform: rotate(90deg);
+        }    
+    
+		.container {
+			display: inline-block;
+			position: relative;
+			width: 100%;
+			border-style: solid;
+			max-width: 80mm;
+		}
+		.container:after {
+			content: '';
+			display: block;
+			margin-top: 66.6%;
+		}
+		.element {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+		}
+
+		html { margin: 0 auto; max-width: 900px; }
+
+        #updown_pad {
+			position: absolute;
+//			left:84%;
+//            top: 10%;
+//            width: 15%;
+//            height: 80%;
+
+			left:0%;
+            top: 89%;
+            width: 98%;
+            height: 10%;
+
+			border-style: solid;
+            //background: linear-gradient(green, white, red );
+        }
+        
+        #status {
+			position: absolute;
+			left:-45%;
+            top: 40%;
+            height: 10%;
+            width: 90%;
+            text-align: center;            
+            transform: rotate(90deg);
+        }
+
+        #appdata {
+			border-style: solid;        
+			position: absolute;
+			left:-35%;
+            top: 40%;
+            height: 10%;
+            width: 80%;
+            transform: rotate(90deg);
+        }
+        
+    </style>
+    
+	<div id = "updown_pad" >
+    </div>
+    
+	<div id = "status">
+        Status
+    </div>
+    
+	<div id = "appdata">
+    </div>
+    
+    <script src="lib.js" type="text/javascript"></script>	
+    
+	<script>
+        var joyData = {
+            x:0,
+            y:0,
+            b0:false,
+        }
+        
+        var ws = null;
+        var ws_connected=0;
+		var running =0;        
+
+        function displayAppData() {
+            $('#appdata').text("x:" + joyData.x + "y:" + joyData.y);  
+        }
+        
+		function deviceOrientationListener(event) {
+            joyData.x = Math.round(event.beta);
+		}
+
+        function touchHandler(event)
+        {
+              // If there's exactly one finger inside this element
+              if (event.targetTouches.length == 1) {
+                var touch = event.targetTouches[0];
+                var offset = $('#updown_pad').offset();
+                var h = $('#updown_pad').height();
+                var w = $('#updown_pad').width();
+
+                var y = 1-(touch.clientY - offset.top)/h; 
+                //console.log(touch);
+                var x = (touch.clientX - offset.left)/w;
+                if (x>1) x=1;
+                if (x<0) x=0;
+                //console.log("Touch event:" + x + "," + y);
+                
+                joyData.y = Math.round( x*200 - 100 );
+                
+                displayAppData();
+              }
+        }
+        
+        function touchHandlerStop(event)
+        {
+            joyData.y = 0;
+            displayAppData();
+        }        
+        
+        function ws_connect(){
+            ws = new WebSocket("ws://" + location.hostname + ":8088");
+            //ws = new WebSocket("ws://127.0.0.1:80");
+            
+             ws.onerror = function()
+             { 
+                ws_connected=0;
+                 $('#status').text('Websocket error, trying again');
+                 running=0;
+                 setTimeout(function(){ws_connect();},2000);
+             };
+             
+            ws.onopen = function()
+             {
+                $('#status').text('Websocket connected!');
+                ws_connected=1;
+                running=1;
+
+             };
+             ws.onmessage = function (evt) 
+             { 
+                //update data				       
+             };
+             ws.onclose = function()
+             { 
+                ws_connected=0;
+                 $('#status').text('Websocket lost connection, trying again');
+                 running=0;
+                 setTimeout(function(){ws_connect();},2000);
+             };
+        }	        
+        
+        function send_data() {
+            if(running){
+                ws.send('G:' + joyData.x + ", " + joyData.y);
+            }
+        }
+        
+        function init() {
+            $('#updown_pad').on("touchstart", touchHandler, true);
+            $('#updown_pad').on("touchmove", touchHandler, true);
+            $('#updown_pad').on("touchend", touchHandlerStop, true);
+            $('#updown_pad').on("touchcancel", touchHandlerStop, true);
+            
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientation", deviceOrientationListener);
+            }
+            else {
+                alert("Sorry, your browser doesn't support Device Orientation");
+            }
+            
+            var interval = setInterval(send_data, 200);
+            
+            ws_connect();
+        }
+        
+        $(document).ready(init);
+	</script>
+</body>
+</html> 

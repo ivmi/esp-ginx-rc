@@ -32,15 +32,15 @@ struct pwm_param {
 // #define PWM_2_OUT_IO_NUM 13
 // #define PWM_2_OUT_IO_FUNC  FUNC_GPIO13
 
-void pwm_init(uint16 freq, uint16 *duty);
-void pwm_start(void);
+//void pwm_init(uint16 freq, uint16 *duty);
+//void pwm_start(void);
 
-void pwm_set_duty(uint16 duty, uint8 channel);
-uint16 pwm_get_duty(uint8 channel);
-void pwm_set_freq(uint16 freq, uint8 channel);
-uint16 pwm_get_freq(uint8 channel);
-bool pwm_add(uint8 channel);
-bool pwm_delete(uint8 channel);
-bool pwm_exist(uint8 channel);
+//void pwm_set_duty(uint16 duty, uint8 channel);
+//uint16 pwm_get_duty(uint8 channel);
+//void pwm_set_freq(uint16 freq, uint8 channel);
+//uint16 pwm_get_freq(uint8 channel);
+//bool pwm_add(uint8 channel);
+//bool pwm_delete(uint8 channel);
+//bool pwm_exist(uint8 channel);
 #endif
 

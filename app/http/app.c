@@ -45,6 +45,7 @@ static url_rewrite rewrites[]={
 //----PATH---------REWRITE-------
 	{"/"			,	"/index.html"},
 	{"/speed-test"	,	"/speed_test.html"},
+    {"/gamepad"    ,    "/gamepad.html"},
 	{"/cats"		,	"/cats.html"},
 	{NULL,NULL}
 
@@ -56,8 +57,8 @@ void ICACHE_FLASH_ATTR init_http_server(){
 	espconn_tcp_set_max_con(20);
 
 	http_server_init();
-	http_server_bind_domain(INTERFACE_DOMAIN);
-	http_server_enable_captive_portal();
+//	http_server_bind_domain(INTERFACE_DOMAIN);
+//	http_server_enable_captive_portal();
 	http_server_enable_cors();
 
 	http_server_rewrite(&rewrites);
