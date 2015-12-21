@@ -98,7 +98,7 @@ void user_init_pwm(void)
 void user_init(void)
 { 
     system_update_cpu_freq(160); //overclock :)
-
+    system_timer_reinit();
     //user_init_pwm();
     
     uart_init(BIT_RATE_115200,BIT_RATE_115200);

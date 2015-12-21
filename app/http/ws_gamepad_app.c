@@ -28,9 +28,8 @@
 
 #define HTTP_PORT 80
 
-#define WS_APP_GAMEPAD_DATA "G:"
-
 Gamepad gamepad;
+GPDataCmds gpDataCmds;
 
 struct ws_app_context {
 	uint8_t stream_data;
@@ -124,30 +123,23 @@ static int  ICACHE_FLASH_ATTR ws_app_msg_received(http_connection *c){
 	str[msg->SIZE]=0;
 
 	//NODE_DBG("\tmsg: %s",str);
-	
-	if(strstr(str, WS_APP_GAMEPAD_DATA)==str){
-		//gamepad data
-		//NODE_DBG("\tGamepad data");
+    //NODE_DBG("\nmsg : ");
+	//int i;
+	//for(i=0;i<msg->SIZE;i++)
+	//	os_printf("%02X",s[i]);
+	//os_printf("\r\n");
 
-		char * s= str + strlen(WS_APP_GAMEPAD_DATA);		
+	//gamepad header, endianess
+    if (s[0]==0x14 && s[1]==0x13 && s[2]==0x12 && s[3]==0x11 && msg->SIZE==32)
+    {
+        os_memcpy(&gpDataCmds, s, 32);
 
-        gamepad.x = atoi(s);
-        if (gamepad.x < -100)
-            gamepad.x = -100;
-        if (gamepad.x > 100)
-            gamepad.x = 100;
-        
-        s = strstr(s, ",");
-        
-        gamepad.y = atoi(s);
-        if (gamepad.y < -100)
-            gamepad.y = -100;
-        if (gamepad.y > 100)
-            gamepad.y = 100;
-        
-		NODE_DBG("Gamepad: %d, %d", gamepad.x, gamepad.y);
-    }
-        
+        //NODE_DBG("\tGamepad data received");
+        //NODE_DBG("\nButtons: %x", gpDataCmds.buttons);
+        //NODE_DBG("\nAccel x: %d", gpDataCmds.accel[0]);
+        NODE_DBG("\nAccel y: %d", gpDataCmds.accel[1]);
+        //NODE_DBG("\nAccel z: %d", gpDataCmds.accel[2]);
+    }    
 	os_free(str);
 
 	return HTTP_WS_CGI_MORE;
