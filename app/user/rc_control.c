@@ -16,7 +16,6 @@ static void servoTimerCb(void *arg)
 {
     gpio_output_set(0, SERVO_BIT, SERVO_BIT, 0);    
     ets_intr_unlock();
-
 }
 
 static void servoUpdateTimerCb(void *arg)

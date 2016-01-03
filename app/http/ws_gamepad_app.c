@@ -25,7 +25,7 @@
 #include "http_websocket_server.h"
 
 #include "ws_gamepad_app.h"
-
+/*
 #define HTTP_PORT 80
 
 Gamepad gamepad;
@@ -155,3 +155,4 @@ void ICACHE_FLASH_ATTR init_ws_server(){
 	http_ws_server_start();
 
 }
+*/

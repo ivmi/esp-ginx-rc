@@ -34,7 +34,8 @@ SUBDIRS=    \
     smart \
     util \
     sensor \
-    spiffs
+    spiffs \
+    hdlc
 
 endif # } PDIR
 
@@ -80,7 +81,8 @@ COMPONENTS_eagle.app.v6 = \
     smart/smart.a \
     util/util.a \
     sensor/sensors.a \
-    spiffs/spiffs.a
+    spiffs/spiffs.a \
+    hdlc/libhdlc.a
 
 
 LINKFLAGS_eagle.app.v6 = \

@@ -235,7 +235,7 @@
             $('#status1').text('Connecting.');
             ws = new WebSocket("ws://" + location.hostname + ":8088");
             ws.binaryType = 'arraybuffer';
-            $('#status').text('Connecting...');
+            $('#status1').text('Connecting...');
             
              ws.onerror = function()
              { 

@@ -253,7 +253,9 @@ static int ICACHE_FLASH_ATTR on_message_begin(http_parser *parser){
 static int ICACHE_FLASH_ATTR on_url(http_parser *parser, const char *url, size_t length)
 {	
 	NODE_DBG("\nhttp_parser url: ");
+    #ifdef DEVELOP_VERSION
 	nprintf(url,length);
+    #endif
 
 	NODE_DBG("http_parser method: %d",parser->method);
 		
@@ -277,7 +279,9 @@ static int ICACHE_FLASH_ATTR on_url(http_parser *parser, const char *url, size_t
 static int ICACHE_FLASH_ATTR on_status(http_parser *parser, const char *url, size_t length)
 {	
 	NODE_DBG("http_parser status: ");
+    #ifdef DEVELOP_VERSION
 	nprintf(url,length);
+    #endif
 
 	//grab the connection
 	http_connection * conn = (http_connection *)parser->data;
@@ -294,7 +298,9 @@ static int ICACHE_FLASH_ATTR on_status(http_parser *parser, const char *url, siz
 static int ICACHE_FLASH_ATTR on_header_field(http_parser *parser, const char *at, size_t length)
 {
 	NODE_DBG("http_parser header: ");
+    #ifdef DEVELOP_VERSION
 	nprintf(at,length);
+    #endif
 
 	//grab the connection
 	http_connection * conn = (http_connection *)parser->data;
@@ -319,7 +325,9 @@ static int ICACHE_FLASH_ATTR on_header_field(http_parser *parser, const char *at
 static int ICACHE_FLASH_ATTR on_header_value(http_parser *parser, const char *at, size_t length)
 {
 	NODE_DBG("http_parser header value: ");
+    #ifdef DEVELOP_VERSION
 	nprintf(at,length);
+    #endif
 	
 	//grab the connection
 	http_connection * conn = (http_connection *)parser->data;
@@ -362,7 +370,9 @@ static int ICACHE_FLASH_ATTR on_headers_complete(http_parser *parser){
 static int ICACHE_FLASH_ATTR on_body(http_parser *parser, const char *at, size_t length)
 {
 	NODE_DBG("\nhttp_parser body: ");
-	nprintf(at,length);
+    #ifdef DEVELOP_VERSION
+    nprintf(at,length);
+    #endif
 
 	//grab the connection
 	http_connection * conn = (http_connection *)parser->data;
@@ -408,11 +418,13 @@ static int ICACHE_FLASH_ATTR on_body(http_parser *parser, const char *at, size_t
 static int ICACHE_FLASH_ATTR on_websocket_data(http_parser *parser, char *data, size_t length)
 {
 	NODE_DBG("\non_websocket_data : ");
-	int i;
-	for(i=0;i<length;i++)
-		os_printf("%02X",data[i]);
-	os_printf("\r\n");
-
+	#ifdef DEVELOP_VERSION
+        int i;
+        for(i=0;i<length;i++)
+            os_printf("%02X",data[i]);
+        os_printf("\r\n");
+    #endif
+        
 	//grab the connection
 	http_connection * conn = (http_connection *)parser->data;
 

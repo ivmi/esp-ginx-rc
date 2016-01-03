@@ -88,7 +88,6 @@ void user_init_pwm(void)
 }
 
 
-
 /******************************************************************************
  * FunctionName : user_init
  * Description  : entry of user application, init user function here
@@ -102,7 +101,7 @@ void user_init(void)
     //user_init_pwm();
     
     uart_init(BIT_RATE_115200,BIT_RATE_115200);
-
+               
     NODE_DBG("User Init");
 
     uint32_t size = flash_get_size_byte();
@@ -121,7 +120,7 @@ void user_init(void)
     //uncomment if you have sensors intalled
     //sensors_init();
     
-    rc_control_init();
+    //rc_control_init();
    
    
     #ifdef DEVELOP_VERSION

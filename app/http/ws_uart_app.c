@@ -23,13 +23,14 @@
 #include "http_process.h"
 #include "websocket.h"
 #include "http_websocket_server.h"
+#include "driver/uart.h"
+#include "hdlc/hdlc.h"
 
-#include "ws_gamepad_app.h"
+#include "ws_uart_app.h"
 
 #define HTTP_PORT 80
+static struct ws_app_context* clients[MAX_CONNECTIONS]={NULL};
 
-Gamepad gamepad;
-GPDataCmds gpDataCmds;
 
 struct ws_app_context {
 	uint8_t stream_data;
@@ -40,6 +41,10 @@ struct ws_app_context {
 	int packet_size;
 };
 
+void uart_put_char(char data)
+{
+    uart_write(0, &data, 1);
+}
 
 static void ICACHE_FLASH_ATTR ws_app_send_packet(struct ws_app_context *context){
 
@@ -74,18 +79,50 @@ static int  ICACHE_FLASH_ATTR ws_app_msg_sent(http_connection *c){
 static int  ICACHE_FLASH_ATTR ws_app_client_disconnected(http_connection *c){
 
 	NODE_DBG("Webscoket app client disconnected %p",c);
-
 	//clean up
+    
 	struct ws_app_context *context = (struct ws_app_context*)c->reverse;
 
 	if(context!=NULL){
 
+        int i;
+        for (i=0; i<MAX_CONNECTIONS; i++)
+        {
+            if (clients[i] == context)
+                clients[i] = NULL;
+        }
+    
 		if(context->packet!=NULL)
 			os_free(context->packet);
 		context->packet=NULL;
 	}
 	os_free(context);	
 
+}
+
+void on_uart_data(uint8_t *data,int len)
+{
+    int i;
+    
+    for (i=0; i<len; i++)
+    {
+        hdlc_on_rx_byte(data[i]);
+    }
+}
+
+void on_uart_frame(const u8_t *buffer,u16_t bytes_received)
+{
+    int i;
+    for (i=0; i<MAX_CONNECTIONS; i++)
+    {
+        struct ws_app_context *context = clients[i];
+        if (context != NULL)
+        {
+            context->packet = (char*) buffer;
+            context->packet_size = bytes_received;
+            ws_app_send_packet(context);
+        }
+    }    
 }
 
 static int  ICACHE_FLASH_ATTR ws_app_client_connected(http_connection *c){
@@ -96,7 +133,20 @@ static int  ICACHE_FLASH_ATTR ws_app_client_connected(http_connection *c){
 	struct ws_app_context *context = (struct  ws_app_context*)os_zalloc(sizeof(struct ws_app_context));
 	context->conn=c;
 	c->reverse = context; //so we may find it on callbacks
-	
+
+    int i;
+    for (i=0; i<MAX_CONNECTIONS; i++)
+    {
+        if (clients[i] == NULL)
+        {
+            clients[i] = context;
+            break;
+        }
+    }
+
+    // set uart interrupt handler
+    uart_register_data_callback(on_uart_data);
+    hdlc_init(uart_put_char, on_uart_frame);
 	NODE_DBG("\tcontext %p",context);
 }
 
@@ -117,32 +167,14 @@ static int  ICACHE_FLASH_ATTR ws_app_msg_received(http_connection *c){
 	char * s = msg->DATA;
 	char *last = s+msg->SIZE;
 
-	//make a null terminated string
-	char * str = (char *)os_zalloc(msg->SIZE + 1);
-	os_memcpy(str,s,msg->SIZE);
-	str[msg->SIZE]=0;
-
-	//NODE_DBG("\tmsg: %s",str);
-    //NODE_DBG("\nmsg : ");
-	//int i;
-	//for(i=0;i<msg->SIZE;i++)
-	//	os_printf("%02X",s[i]);
-	//os_printf("\r\n");
-
-	//gamepad header, endianess
-    if (s[0]==0x14 && s[1]==0x13 && s[2]==0x12 && s[3]==0x11 && msg->SIZE==32)
-    {
-        os_memcpy(&gpDataCmds, s, 32);
-
-        //NODE_DBG("\tGamepad data received");
-        //NODE_DBG("\nButtons: %x", gpDataCmds.buttons);
-        //NODE_DBG("\nAccel x: %d", gpDataCmds.accel[0]);
-        NODE_DBG("\nAccel y: %d", gpDataCmds.accel[1]);
-        //NODE_DBG("\nAccel z: %d", gpDataCmds.accel[2]);
-    }    
-	os_free(str);
-
-	return HTTP_WS_CGI_MORE;
+    //os_printf("%.*s", msg->SIZE, msg->DATA);
+    #ifdef DEVELOP_VERSION
+        uart_write(UART0, msg->DATA,msg->SIZE);
+    #endif
+    
+    hdlc_tx_frame( msg->DATA, msg->SIZE);
+	
+    return HTTP_WS_CGI_MORE;
 
 }
 

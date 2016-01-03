@@ -87,10 +87,8 @@ struct http_connection{
 
 	//websocket related
 	uint8_t handshake_ok;
-
 	
-
-	void *reverse;
+    void *reverse;
 };
 
 
